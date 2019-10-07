@@ -83,9 +83,10 @@ resource "null_resource" "apply_configmap_auth" {
 
   provisioner "local-exec" {
     command = <<EOT
-      while [[ ! -e ${local.configmap_auth_file} ]] ; do sleep 1; done && \
-      aws eks update-kubeconfig --name=${local.cluster_name} --region=${var.region} --kubeconfig=${var.kubeconfig_path} && \
-      kubectl apply -f ${local.configmap_auth_file} --kubeconfig ${var.kubeconfig_path}
-    EOT
+until $(ls ${local.configmap_auth_file} > /dev/null 2>&1); do sleep 1; done && \
+aws eks update-kubeconfig --name=${local.cluster_name} --region=${var.region} --kubeconfig=${var.kubeconfig_path} && \
+until $(kubectl get nodes --kubeconfig=${var.kubeconfig_path} > /dev/null 2>&1); do sleep 1; done && \
+kubectl apply -f ${local.configmap_auth_file} --kubeconfig ${var.kubeconfig_path}
+EOT
   }
 }
